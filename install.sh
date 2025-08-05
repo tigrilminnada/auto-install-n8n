@@ -33,7 +33,11 @@ cleanup() {
         log_error "Installation failed. Cleaning up..."
         # Stop containers if they were started
         if [ -f "$COMPOSE_FILE" ]; then
-            docker-compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+            if command -v docker-compose >/dev/null 2>&1; then
+                docker-compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+            else
+                docker compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+            fi
         fi
     fi
 }
@@ -226,8 +230,8 @@ install_docker() {
         fi
     fi
     
-    # Install docker-compose (standalone) if not available
-    if ! command -v docker-compose >/dev/null 2>&1; then
+    # Install docker-compose (standalone) if not available and docker compose plugin not available
+    if ! command -v docker-compose >/dev/null 2>&1 && ! docker compose version >/dev/null 2>&1; then
         log_info "Menginstall Docker Compose..."
         if [ "$IS_ROOT" = true ]; then
             curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -244,13 +248,20 @@ install_docker() {
         exit 1
     fi
     
-    if ! docker-compose --version >/dev/null 2>&1; then
+    # Verify Docker Compose installation (either standalone or plugin)
+    if ! command -v docker-compose >/dev/null 2>&1 && ! docker compose version >/dev/null 2>&1; then
         log_error "Gagal menginstall Docker Compose"
         exit 1
     fi
     
     log_success "Docker $(docker --version | cut -d' ' -f3 | cut -d',' -f1) berhasil diinstall"
-    log_success "Docker Compose $(docker-compose --version | cut -d' ' -f3 | cut -d',' -f1) berhasil diinstall"
+    
+    # Show compose version
+    if command -v docker-compose >/dev/null 2>&1; then
+        log_success "Docker Compose $(docker-compose --version | cut -d' ' -f3 | cut -d',' -f1) berhasil diinstall"
+    else
+        log_success "Docker Compose (plugin) berhasil diinstall"
+    fi
 }
 
 # === INSTALL CLOUDFLARED ===
@@ -469,21 +480,29 @@ start_n8n_docker() {
     
     # Pull latest images
     log_info "Downloading n8n Docker images..."
-    docker-compose pull
+    if command -v docker-compose >/dev/null 2>&1; then
+        docker-compose pull
+    else
+        docker compose pull
+    fi
     
     # Start containers
     log_info "Starting containers..."
-    docker-compose up -d
+    if command -v docker-compose >/dev/null 2>&1; then
+        docker-compose up -d
+    else
+        docker compose up -d
+    fi
     
     # Wait for containers to start
     log_info "Menunggu containers startup..."
     sleep 30
     
     # Check if containers are running
-    if ! docker ps | grep -q "n8n-app"; then
+    if ! docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "n8n-app.*Up"; then
         log_error "Gagal memulai n8n container"
         echo "Container status:"
-        docker ps -a | grep n8n
+        docker ps -a --filter "name=n8n" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         echo ""
         echo "Container logs:"
         docker logs n8n-app 2>&1 | tail -20
@@ -685,10 +704,10 @@ health_check() {
     
     # Check Docker containers
     cd "$N8N_DIR"
-    if ! docker ps | grep -q "n8n-app.*Up"; then
+    if ! docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "n8n-app.*Up"; then
         log_error "n8n Docker container tidak berjalan dengan baik"
         echo "Container status:"
-        docker ps -a | grep n8n
+        docker ps -a --filter "name=n8n" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         echo ""
         echo "Recent logs:"
         docker logs n8n-app 2>&1 | tail -20
@@ -728,7 +747,11 @@ create_management_scripts() {
     cat > "$N8N_DIR/start.sh" <<EOF
 #!/bin/bash
 cd "$N8N_DIR"
-docker-compose up -d
+if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose up -d
+else
+    docker compose up -d
+fi
 echo "n8n Docker containers started"
 EOF
     
@@ -736,7 +759,11 @@ EOF
     cat > "$N8N_DIR/stop.sh" <<EOF
 #!/bin/bash
 cd "$N8N_DIR"
-docker-compose down
+if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose down
+else
+    docker compose down
+fi
 echo "n8n Docker containers stopped"
 EOF
     
@@ -744,7 +771,11 @@ EOF
     cat > "$N8N_DIR/restart.sh" <<EOF
 #!/bin/bash
 cd "$N8N_DIR"
-docker-compose restart
+if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose restart
+else
+    docker compose restart
+fi
 echo "n8n Docker containers restarted"
 EOF
     
@@ -752,7 +783,11 @@ EOF
     cat > "$N8N_DIR/logs.sh" <<EOF
 #!/bin/bash
 cd "$N8N_DIR"
-docker-compose logs -f
+if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose logs -f
+else
+    docker compose logs -f
+fi
 EOF
     
     # Create backup script
@@ -835,7 +870,7 @@ main() {
     echo -e "${CYAN}   • Restart containers: $N8N_DIR/restart.sh${NC}"
     echo -e "${CYAN}   • View logs: $N8N_DIR/logs.sh${NC}"
     echo -e "${CYAN}   • Create backup: $N8N_DIR/backup.sh${NC}"
-    echo -e "${CYAN}   • Check status: docker-compose -f $COMPOSE_FILE ps${NC}"
+    echo -e "${CYAN}   • Check status: cd $N8N_DIR && docker ps --filter name=n8n${NC}"
     echo -e "${CYAN}   • List tunnels: cloudflared tunnel list${NC}"
     echo ""
     echo -e "${BLUE}📁 File Locations:${NC}"
