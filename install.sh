@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# n8n Docker + Cloudflare Tunnel Auto Installer
+# n8n Docker + Cloudflare Tunnel Auto Installer 
 # Modern, Lightweight Docker-based Installation
 # Version: 3.0 - Docker Edition with Enhanced Performance
 
