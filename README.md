@@ -64,7 +64,7 @@ Skrip instalasi otomatis untuk n8n menggunakan Docker dan Cloudflare Tunnel pada
 sudo apt update && sudo apt upgrade -y
 
 # Download script API version
-wget https://raw.githubusercontent.com/tigrilminnada/auto-install-n8n/main/install-api.sh
+wget https://raw.githubusercontent.com/tigrilminnada/auto-install-n8n/refs/heads/master/install-api.sh
 chmod +x install-api.sh
 ```
 
@@ -75,7 +75,7 @@ chmod +x install-api.sh
 sudo apt update && sudo apt upgrade -y
 
 # Download script interactive version
-wget https://raw.githubusercontent.com/tigrilminnada/auto-install-n8n/main/install.sh
+wget https://raw.githubusercontent.com/tigrilminnada/auto-install-n8n/refs/heads/master/install.sh
 chmod +x install.sh
 ```
 
