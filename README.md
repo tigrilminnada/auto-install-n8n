@@ -137,8 +137,4 @@ docker logs n8n-app
 
 ---
 
-<<<<<<< HEAD
 **Transform your workflows with automated n8n deployment**
-=======
-**Transform your workflows with automated n8n deployment**
->>>>>>> 2c35008dcd0f150093bf2d9748e894cd53b26b6c
