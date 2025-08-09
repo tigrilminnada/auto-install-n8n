@@ -1,392 +1,140 @@
-# n8n Docker + Cloudflare Tunnel Auto Installer
+# 🚀 n8n Auto Installer with Cloudflare Tunnel
 
-Skrip instalasi otomatis untuk n8n menggunakan Docker dan Cloudflare Tunnel pada VPS Ubuntu/Debian. Tersedia 2 versi script untuk kebutuhan yang berbeda.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docker](https://img.shields.io/badge/Docker-Supported-blue.svg)](https://www.docker.com/)
+[![Cloudflare](https://img.shields.io/badge/Cloudflare-Tunnel-orange.svg)](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
+[![n8n](https://img.shields.io/badge/n8n-Latest-brightgreen.svg)](https://n8n.io/)
 
-## 🔧 Dua Versi Script
+> **One-click n8n automation installer with Docker + Cloudflare Tunnel for secure HTTPS access**
 
-### 📱 **install-api.sh** - Version 4.0 (API Mode)
-**Untuk Telegram Bot & Remote Installation**
-- ✅ Mode non-interaktif menggunakan Cloudflare API
-- ✅ Parameter melalui command line
-- ✅ Cocok untuk integrasi Telegram bot
-- ✅ Instalasi remote tanpa browser
-- ✅ Automasi penuh dengan API token
-
-### 🖥️ **install.sh** - Version 3.0 (Interactive Mode)
-**Untuk Setup Manual & Guided Installation**
-- ✅ Mode interaktif dengan browser login
-- ✅ Guided step-by-step installation
-- ✅ Login manual ke Cloudflare via browser
-- ✅ Cocok untuk first-time setup
-- ✅ Pemilihan domain secara interaktif
-
-## 📋 Fitur Umum
-
-- ✅ Instalasi otomatis n8n dengan Docker
-- ✅ Integrasi Cloudflare Tunnel untuk akses publik yang aman
-- ✅ Dukungan database SQLite dan PostgreSQL
-- ✅ SSL otomatis melalui Cloudflare
-- ✅ Validasi sistem dan dependency secara otomatis
-- ✅ Logging lengkap untuk debugging
-
-## 🛠️ Requirements
-
-### VPS Requirements
-- **OS**: Ubuntu 18.04+ atau Debian 10+
-- **RAM**: Minimal 1GB (Recommended 2GB+)
-- **Storage**: Minimal 2GB free space
-- **Architecture**: x86_64 (amd64)
-- **Network**: Akses internet untuk download dependency
-
-### Cloudflare Requirements
-
-**Untuk install-api.sh (API Mode):**
-- Akun Cloudflare dengan domain yang sudah dikonfigurasi
-- Cloudflare API Token dengan permissions:
-  - `Zone:Zone:Read`
-  - `Zone:DNS:Edit`
-  - `Account:Cloudflare Tunnel:Edit`
-- Zone ID dan Account ID dari dashboard Cloudflare
-
-**Untuk install.sh (Interactive Mode):**
-- Akun Cloudflare dengan domain yang sudah dikonfigurasi
-- Browser untuk login ke Cloudflare
-- Akses internet untuk proses login
-
-## 🚀 Quick Start
-
-**Pilih versi script sesuai kebutuhan:**
-
-### Versi 1: install-api.sh (API Mode - Recommended untuk Telegram Bot)
+## ⚡ Quick Install
 
 ```bash
-# Update sistem
-sudo apt update && sudo apt upgrade -y
-
-# Download script API version
-wget https://raw.githubusercontent.com/tigrilminnada/auto-install-n8n/refs/heads/master/install-api.sh
-chmod +x install-api.sh
+curl -fsSL https://raw.githubusercontent.com/tigrilminnada/auto-install-n8n/refs/heads/master/install.sh | bash
 ```
 
-### Versi 2: install.sh (Interactive Mode - Recommended untuk Manual Setup)
+## 📋 Prerequisites
+
+### 1. Server Requirements
+- **OS**: Ubuntu 18.04+ or Debian 10+
+- **RAM**: 1GB minimum (2GB recommended)
+- **Storage**: 1GB free space
+- **Access**: Root or sudo privileges
+
+### 2. Cloudflare Domain Setup
+
+#### Step 1: Add Domain to Cloudflare
+1. Login to [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Click **"Add a Site"**
+3. Enter your domain (e.g., `yourdomain.com`)
+4. Choose **Free Plan**
+5. Update nameservers at your domain registrar:
+   ```
+   nameserver1.cloudflare.com
+   nameserver2.cloudflare.com
+   ```
+6. Wait for DNS propagation (5-60 minutes)
+
+#### Step 2: Verify Domain Status
+- Domain status should show **"Active"** in Cloudflare dashboard
+- SSL/TLS mode should be **"Full"** or **"Full (strict)"**
+
+#### Step 3: Prepare Subdomain
+- Choose subdomain for n8n (e.g., `automation`, `n8n`, `workflows`)
+- Don't create DNS record manually - installer will handle this
+
+## 🛠️ Installation Process
+
+The installer will automatically:
+
+1. **Check system requirements**
+2. **Install Docker & Docker Compose**
+3. **Install Cloudflare Tunnel (cloudflared)**
+4. **Prompt for configuration**:
+   - Subdomain name
+   - Admin username/password
+   - Database choice (SQLite/PostgreSQL)
+5. **Authenticate with Cloudflare** (opens browser)
+6. **Select your domain** from available list
+7. **Create and configure tunnel**
+8. **Start n8n containers**
+9. **Create DNS record automatically**
+
+## 📊 What You'll Get
+
+### Access Information
+- **URL**: `https://[subdomain].[yourdomain].com`
+- **Username**: Your chosen admin username
+- **Password**: Your chosen admin password
+
+### Installed Components
+- **n8n**: Latest version in Docker container
+- **Database**: SQLite (default) or PostgreSQL
+- **Cloudflare Tunnel**: Secure HTTPS access
+- **Management Scripts**: Start/stop/backup tools
+
+## 🔧 Management Commands
 
 ```bash
-# Update sistem
-sudo apt update && sudo apt upgrade -y
+# Navigate to n8n directory
+cd /opt/n8n
 
-# Download script interactive version
-wget https://raw.githubusercontent.com/tigrilminnada/auto-install-n8n/refs/heads/master/install.sh
-chmod +x install.sh
-```
+# Container management
+./start.sh     # Start containers
+./stop.sh      # Stop containers  
+./restart.sh   # Restart containers
+./logs.sh      # View logs
+./backup.sh    # Create backup
 
-### 2. Cara Membuat Cloudflare API Token (Untuk install-api.sh)
-
-**⚠️ Hanya diperlukan untuk install-api.sh (API Mode)**
-
-1. Login ke [Cloudflare Dashboard](https://dash.cloudflare.com/profile/api-tokens)
-2. Klik **"Create Token"**
-3. Pilih **"Custom token"**
-4. Konfigurasi permissions:
-   - **Zone** → **Zone** → **Read**
-   - **Zone** → **DNS** → **Edit**
-   - **Account** → **Cloudflare Tunnel** → **Edit**
-5. **Zone Resources**: Include → All zones
-6. **Account Resources**: Include → All accounts
-7. Klik **"Continue to summary"** → **"Create Token"**
-8. Salin token yang dihasilkan
-
-### 3. Mendapatkan Zone ID dan Account ID (Untuk install-api.sh)
-
-**⚠️ Hanya diperlukan untuk install-api.sh (API Mode)**
-
-#### Zone ID:
-1. Buka domain di Cloudflare Dashboard
-2. Di sidebar kanan, salin **Zone ID**
-
-#### Account ID:
-1. Di Cloudflare Dashboard, klik domain Anda
-2. Di sidebar kanan, salin **Account ID**
-
-Atau gunakan API:
-```bash
-# Get Zone ID
-curl -X GET "https://api.cloudflare.com/client/v4/zones?name=example.com" \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
-  -H "Content-Type: application/json"
-
-# Get Account ID
-curl -X GET "https://api.cloudflare.com/client/v4/accounts" \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
-  -H "Content-Type: application/json"
-```
-
-## 📖 Cara Penggunaan
-
-## 🔵 Metode 1: install-api.sh (API Mode)
-
-### Mode Interaktif (Guided Setup)
-
-```bash
-sudo ./install-api.sh
-```
-
-Script akan meminta input secara interaktif:
-- Cloudflare API Token
-- Zone ID dan Account ID
-- Domain dan subdomain
-- Username dan password n8n
-- Pilihan database (SQLite/PostgreSQL)
-
-### Mode Non-Interaktif (Telegram Bot / Automation)
-
-```bash
-sudo ./install-api.sh \
-  --telegram-mode \
-  --cf-api-token "your_cloudflare_api_token" \
-  --cf-zone-id "your_zone_id" \
-  --cf-account-id "your_account_id" \
-  --subdomain "n8n" \
-  --domain "example.com" \
-  --n8n-pass "secure_password_123"
-```
-
-#### Parameter Opsional untuk API Mode:
-
-```bash
-# Dengan PostgreSQL
-sudo ./install-api.sh \
-  --telegram-mode \
-  --cf-api-token "your_token" \
-  --cf-zone-id "your_zone_id" \
-  --cf-account-id "your_account_id" \
-  --subdomain "n8n" \
-  --domain "example.com" \
-  --n8n-pass "secure_password_123" \
-  --postgres \
-  --postgres-pass "db_password_123" \
-  --n8n-user "administrator"
-```
-
-## 🟢 Metode 2: install.sh (Interactive Mode)
-
-### Setup Manual dengan Browser Login
-
-```bash
-sudo ./install.sh
-```
-
-Script akan melakukan:
-1. **Input konfigurasi** - subdomain, username, password n8n
-2. **Browser login** - membuka browser untuk login ke Cloudflare
-3. **Pemilihan domain** - pilih domain yang sudah terdaftar di Cloudflare
-4. **Instalasi otomatis** - setup Docker, tunnel, dan DNS
-
-**Keuntungan Interactive Mode:**
-- ✅ Tidak perlu API token manual
-- ✅ Login langsung via browser (lebih mudah)
-- ✅ Pemilihan domain otomatis dari akun Cloudflare
-- ✅ Setup pertama kali yang user-friendly
-
-## 📚 Parameter Lengkap (install-api.sh)
-
-**⚠️ Parameter ini hanya untuk install-api.sh (API Mode)**
-
-| Parameter | Required | Default | Deskripsi |
-|-----------|----------|---------|-----------|
-| `--cf-api-token` | ✅ | - | Cloudflare API Token |
-| `--cf-zone-id` | ✅ | - | Cloudflare Zone ID |
-| `--cf-account-id` | ✅ | - | Cloudflare Account ID |
-| `--subdomain` | ✅ | - | Subdomain untuk n8n (misal: n8n) |
-| `--domain` | ✅ | - | Domain utama (misal: example.com) |
-| `--n8n-pass` | ✅ | - | Password n8n (minimal 8 karakter) |
-| `--n8n-user` | ❌ | admin | Username n8n |
-| `--postgres` | ❌ | false | Gunakan PostgreSQL |
-| `--postgres-pass` | ❌ | n8n123 | Password PostgreSQL |
-| `--telegram-mode` | ❌ | false | Mode non-interaktif |
-
-## 📋 Parameter install.sh (Interactive Mode)
-
-**install.sh tidak memerlukan parameter command line.** Semua konfigurasi dilakukan secara interaktif:
-
-1. **Subdomain** - Input manual saat script berjalan
-2. **Username n8n** - Input manual (default: admin)
-3. **Password n8n** - Input manual dengan konfirmasi
-4. **Database** - Pilihan SQLite atau PostgreSQL
-5. **Domain** - Dipilih dari list domain Cloudflare setelah login
-
-## 🔧 Troubleshooting
-
-### Memeriksa Status Service
-
-```bash
-# Status Docker containers
-docker ps
-docker logs n8n-app
-
-# Status Cloudflare Tunnel
+# Check status
+docker ps --filter name=n8n
 sudo systemctl status cloudflared
-sudo journalctl -u cloudflared -f
-
-# Memeriksa koneksi n8n
-curl -I http://localhost:5678
-curl -I https://your-subdomain.your-domain.com
 ```
 
-### Log Files
-
-```bash
-# Installation log
-cat /tmp/n8n_install.log
-
-# Docker logs
-docker logs n8n-app
-docker logs n8n-postgres  # jika menggunakan PostgreSQL
-```
+## ⚠️ Troubleshooting
 
 ### Common Issues
 
-#### 1. "Permission denied" saat menjalankan script
-```bash
-# Untuk API version
-chmod +x install-api.sh
-sudo ./install-api.sh
+**Domain not available during installation:**
+- Verify domain is added to Cloudflare
+- Check domain status is "Active"
+- Ensure you have admin access to the domain
 
-# Untuk Interactive version
-chmod +x install.sh
-sudo ./install.sh
+**Browser doesn't open for Cloudflare auth:**
+```bash
+# Run on server with GUI or copy the auth URL to local browser
+cloudflared tunnel login
 ```
 
-#### 2. Docker tidak bisa start setelah instalasi
+**Permission denied errors:**
 ```bash
-# Restart Docker
-sudo systemctl restart docker
-
-# Jika masih error, coba logout/login atau reboot
-sudo reboot
+sudo usermod -aG docker $USER
+# Logout and login again
 ```
 
-#### 3. Cloudflare Tunnel tidak terhubung
+**Containers won't start:**
 ```bash
-# Restart cloudflared
-sudo systemctl restart cloudflared
-
-# Check konfigurasi
-sudo cat /etc/cloudflared/config.yml
+# Check logs
+docker logs n8n-app
 ```
 
-#### 4. n8n tidak bisa diakses dari internet
-- Pastikan DNS record sudah terbuat di Cloudflare
-- Check apakah port 5678 accessible: `curl http://localhost:5678`
-- Verify Cloudflare Tunnel status: `sudo cloudflared tunnel list`
+## 🚀 Features
 
-#### 5. Issues khusus install-api.sh (API Mode)
-```bash
-# Test API token
-curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
-  -H "Content-Type: application/json"
-
-# Check Zone ID validity
-curl -X GET "https://api.cloudflare.com/client/v4/zones/YOUR_ZONE_ID" \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
-  -H "Content-Type: application/json"
-```
-
-#### 6. Issues khusus install.sh (Interactive Mode)
-- **Browser tidak bisa dibuka**: Pastikan VPS memiliki GUI atau gunakan X11 forwarding
-- **Domain tidak muncul**: Pastikan domain sudah ditambahkan ke akun Cloudflare
-- **Login gagal**: Coba manual: `cloudflared tunnel login`
-
-### Reset Installation
-
-```bash
-# Stop semua services
-sudo systemctl stop cloudflared
-docker-compose -f /opt/n8n/docker-compose.yml down
-
-# Hapus data (HATI-HATI: Ini akan menghapus semua data n8n!)
-sudo rm -rf /opt/n8n
-sudo rm -rf /etc/cloudflared
-
-# Uninstall cloudflared service
-sudo cloudflared service uninstall
-```
-
-## 📝 Post-Installation
-
-### Akses n8n
-Setelah instalasi selesai, akses n8n melalui:
-- **URL**: https://your-subdomain.your-domain.com
-- **Username**: sesuai yang diset (default: admin)
-- **Password**: sesuai yang diset saat instalasi
-
-### Backup Data
-
-```bash
-# Backup volume n8n
-docker run --rm -v n8n_storage:/data -v $(pwd):/backup alpine tar czf /backup/n8n-backup-$(date +%Y%m%d).tar.gz -C /data .
-
-# Backup PostgreSQL (jika digunakan)
-docker exec n8n-postgres pg_dump -U n8n n8n > n8n-db-backup-$(date +%Y%m%d).sql
-```
-
-### Update n8n
-
-```bash
-cd /opt/n8n
-docker-compose pull
-docker-compose up -d
-```
-
-## 🔒 Security Best Practices
-
-1. **Gunakan password yang kuat** untuk n8n dan database
-2. **Aktifkan 2FA** di akun Cloudflare
-3. **Backup reguler** data n8n
-4. **Monitor log** untuk aktivitas mencurigakan
-5. **Update reguler** n8n dan sistem VPS
+- ✅ **One-click installation** - Fully automated setup
+- 🐳 **Docker containers** - Lightweight and portable
+- 🔒 **HTTPS by default** - Cloudflare SSL termination
+- 🔐 **Built-in authentication** - Username/password protection
+- 📦 **Auto-restart** - Containers restart on reboot
+- 🛡️ **No port exposure** - Secure tunnel connection
+- 🗄️ **Database choice** - SQLite or PostgreSQL
+- 📋 **Management tools** - Easy backup and maintenance
 
 ## 🆘 Support
 
-Jika mengalami masalah:
-
-### Untuk install-api.sh (API Mode):
-1. **Check log file**: `/tmp/n8n_install.log`
-2. **Verify API token**: Test dengan curl command
-3. **Check Zone ID dan Account ID**: Pastikan sesuai dengan domain
-4. **Verify system requirements** terpenuhi
-
-### Untuk install.sh (Interactive Mode):
-1. **Check Docker status**: `docker ps` dan `docker logs n8n-app`
-2. **Check Cloudflare login**: `cloudflared tunnel list`
-3. **Check browser access**: Pastikan browser bisa dibuka
-4. **Verify domain ownership**: Pastikan domain sudah di Cloudflare
-
-### General Support:
-1. **Check network connectivity** ke Cloudflare
-2. **Verify system requirements** terpenuhi
-3. **Check ports**: 5678 untuk n8n, 443 untuk HTTPS
-
-## 🔄 Kapan Menggunakan Script Mana?
-
-### Gunakan **install-api.sh** jika:
-- ✅ Integrasi dengan Telegram bot
-- ✅ Instalasi remote/automation
-- ✅ Multiple deployment
-- ✅ Server headless (tanpa GUI)
-- ✅ CI/CD pipeline
-
-### Gunakan **install.sh** jika:
-- ✅ Setup manual pertama kali
-- ✅ Learning purpose
-- ✅ VPS dengan GUI/desktop
-- ✅ Ingin guided installation
-- ✅ Tidak ingin repot dengan API token
-
-## 📜 License
-
-Script ini dibuat untuk kemudahan instalasi n8n dengan Cloudflare Tunnel. Gunakan dengan tanggung jawab sendiri.
+- **Issues**: [GitHub Repository](https://github.com/tigrilminnada/auto-install-n8n/issues)
+- **n8n Docs**: [docs.n8n.io](https://docs.n8n.io/)
+- **Cloudflare Tunnel**: [Cloudflare Documentation](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
 
 ---
 
-**Created with ❤️ for n8n automation enthusiasts**
+**Transform your workflows with automated n8n deployment**
